@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Water Jug Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+margin:0;
+background:#162447;
+font-family:Arial;
+color:white;
+text-align:center;
+}
+
+.screen{
+display:none;
+padding:20px;
+}
+
+.active{
+display:block;
+}
+
+.title{
+font-size:28px;
+color:yellow;
+margin-top:10px;
+}
+
+.moves{
+color:#90ee90;
+margin:10px;
+}
+
+.bucket-area{
+display:flex;
+justify-content:center;
+gap:40px;
+margin-top:30px;
+}
+
+.bucket-container{
+text-align:center;
+}
+
+.bucket{
+width:90px;
+height:160px;
+background:#ccc;
+border:4px solid black;
+border-radius:15px;
+position:relative;
+overflow:hidden;
+}
+
+.water{
+position:absolute;
+bottom:0;
+width:100%;
+background:#1e90ff;
+transition:height 0.5s;
+}
+
+.label{
+margin-top:5px;
+font-weight:bold;
+color:#fff3a3;
+}
+
+.controls{
+margin-top:30px;
+}
+
+button{
+width:45%;
+padding:15px;
+margin:5px;
+font-size:16px;
+border:none;
+border-radius:5px;
+color:white;
+cursor:pointer;
+}
+
+.fill{background:#006400;}
+.empty{background:#8B2500;}
+.pour{background:#7a5c00;}
+.menu{background:#555;}
+.goalbtn{background:#1e3a5f;}
+.menu-button{
+width:80%;
+background:#1e90ff;
+margin-top:20px;
+}
+
+button:hover{
+opacity:0.85;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+
+<h1>🪣 WATER JUG GAME</h1>
+
+<button class="menu-button" onclick="startGame(2)">
+Play 2 Jugs (4L,3L)
+</button>
+
+<button class="menu-button" onclick="startGame(3)">
+Play 3 Jugs (8L,5L,3L)
+</button>
+
+</div>
+
+
+<!-- GAME -->
+<div id="game" class="screen">
+
+<h2 id="goal" class="title"></h2>
+
+<div id="moves" class="moves"></div>
+
+<div id="bucketArea" class="bucket-area"></div>
+
+<div id="controls" class="controls"></div>
+
+<button class="goalbtn" onclick="manualNewGoal()">NEW GOAL</button>
+
+<button class="menu" onclick="showMenu()">MENU</button>
+
+</div>
+
+
+<script>
+
+let jugConfig={}
+let levels={}
+let goal=0
+let moves=0
+
+
+// Show menu
+function showMenu(){
+
+document.getElementById("menu").classList.add("active")
+document.getElementById("game").classList.remove("active")
+
+}
+
+
+// Start game
+function startGame(count){
+
+if(count==2)
+jugConfig={A:4,B:3}
+else
+jugConfig={A:8,B:5,C:3}
+
+levels={}
+
+for(let k in jugConfig)
+levels[k]=0
+
+moves=0
+
+document.getElementById("menu").classList.remove("active")
+document.getElementById("game").classList.add("active")
+
+buildBuckets()
+buildControls()
+newGoal()
+
+}
+
+
+// Generate random goal (1 to max capacity)
+function newGoal(){
+
+let maxCap = Math.max(...Object.values(jugConfig))
+
+goal = Math.floor(Math.random()*maxCap)+1
+
+updateDisplay()
+
+}
+
+
+// Manual goal button
+function manualNewGoal(){
+
+for(let k in levels)
+levels[k]=0
+
+moves=0
+
+newGoal()
+
+}
+
+
+// Build bucket UI
+function buildBuckets(){
+
+let html=""
+
+for(let k in jugConfig){
+
+html+=`
+<div class="bucket-container">
+
+<div class="bucket">
+<div id="water${k}" class="water"></div>
+</div>
+
+<div class="label">
+${k} (${jugConfig[k]}L)
+</div>
+
+</div>
+`
+}
+
+document.getElementById("bucketArea").innerHTML=html
+
+}
+
+
+// Build buttons
+function buildControls(){
+
+let html=""
+
+for(let k in jugConfig){
+
+html+=`
+<button class="fill" onclick="fill('${k}')">FILL ${k}</button>
+
+<button class="empty" onclick="emptyJug('${k}')">EMPTY ${k}</button>
+`
+}
+
+// Pour only if 2 jugs
+let keys=Object.keys(jugConfig)
+
+if(keys.length==2){
+
+html+=`
+<button class="pour" onclick="pour('${keys[0]}','${keys[1]}')">
+
+${keys[0]} ➜ ${keys[1]}
+
+</button>
+
+<button class="pour" onclick="pour('${keys[1]}','${keys[0]}')">
+
+${keys[1]} ➜ ${keys[0]}
+
+</button>
+`
+}
+
+document.getElementById("controls").innerHTML=html
+
+}
+
+
+// Update display
+function updateDisplay(){
+
+document.getElementById("goal").innerHTML=
+"🎯 GOAL: "+goal+"L"
+
+document.getElementById("moves").innerHTML=
+"Moves: "+moves
+
+for(let k in jugConfig){
+
+let percent=(levels[k]/jugConfig[k])*100
+
+document.getElementById("water"+k).style.height=
+percent+"%"
+
+}
+
+checkWin()
+
+}
+
+
+// Fill
+function fill(k){
+
+levels[k]=jugConfig[k]
+
+moves++
+
+updateDisplay()
+
+}
+
+
+// Empty
+function emptyJug(k){
+
+levels[k]=0
+
+moves++
+
+updateDisplay()
+
+}
+
+
+// Pour
+function pour(a,b){
+
+let space=jugConfig[b]-levels[b]
+
+let amt=Math.min(space,levels[a])
+
+levels[a]-=amt
+
+levels[b]+=amt
+
+moves++
+
+updateDisplay()
+
+}
+
+
+// Win check and auto new goal
+function checkWin(){
+
+for(let k in levels){
+
+if(levels[k]==goal){
+
+document.getElementById("goal").innerHTML=
+"🎉 YOU WIN! New Goal Loading..."
+
+setTimeout(()=>{
+
+for(let j in levels)
+levels[j]=0
+
+moves=0
+
+newGoal()
+
+},1000)
+
+return
+
+}
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
