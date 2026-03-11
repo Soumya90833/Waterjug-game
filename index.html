@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pour & Solve</title>
+
+<style>
+
+body{
+font-family: Arial;
+background:#0f1c3f;
+color:white;
+text-align:center;
+}
+
+h1{
+margin-top:20px;
+}
+
+button{
+padding:10px 15px;
+margin:5px;
+border:none;
+border-radius:6px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.menuBtn{
+background:#3a8cff;
+color:white;
+}
+
+.bucketArea{
+display:flex;
+justify-content:center;
+margin-top:30px;
+gap:40px;
+}
+
+.bucketContainer{
+text-align:center;
+}
+
+.bucket{
+width:90px;
+height:180px;
+border:3px solid white;
+border-radius:10px;
+position:relative;
+background:#ddd;
+overflow:hidden;
+}
+
+.water{
+position:absolute;
+bottom:0;
+width:100%;
+background:#2ea3ff;
+}
+
+.controls{
+margin-top:30px;
+}
+
+.row{
+margin:10px;
+}
+
+.popup{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+color:black;
+padding:30px;
+border-radius:10px;
+display:none;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<h1>🪣 Pour & Solve</h1>
+
+<div id="menu">
+
+<button class="menuBtn" onclick="startGame(2)">Play 2 Jugs</button>
+
+<button class="menuBtn" onclick="startGame(3)">Play 3 Jugs</button>
+
+</div>
+
+
+<div id="game" style="display:none">
+
+<h2 id="goal"></h2>
+
+<h3 id="moves">Moves: 0</h3>
+
+<div class="bucketArea" id="bucketArea"></div>
+
+<div class="controls" id="controls"></div>
+
+<button onclick="resetGame()">RESET</button>
+
+<button onclick="showMenu()">MENU</button>
+
+</div>
+
+
+<div class="popup" id="popup">
+<h2>You Won!</h2>
+<p id="winMoves"></p>
+<button onclick="newRound()">START</button>
+</div>
+
+
+<script>
+
+let capacities={}
+let levels={}
+let goal=0
+let moves=0
+
+
+function startGame(type){
+
+document.getElementById("menu").style.display="none"
+document.getElementById("game").style.display="block"
+
+if(type==2){
+capacities={A:4,B:3}
+}
+else{
+capacities={A:8,B:5,C:3}
+}
+
+levels={}
+for(let k in capacities){
+levels[k]=0
+}
+
+moves=0
+
+generateGoal()
+
+drawBuckets()
+createButtons()
+
+updateDisplay()
+
+}
+
+
+function generateGoal(){
+
+let max=Math.max(...Object.values(capacities))
+goal=Math.floor(Math.random()*max)+1
+
+}
+
+
+function drawBuckets(){
+
+let area=document.getElementById("bucketArea")
+area.innerHTML=""
+
+for(let k in capacities){
+
+let container=document.createElement("div")
+container.className="bucketContainer"
+
+let label=document.createElement("h3")
+label.innerText=k+" - "+capacities[k]+"L"
+
+let bucket=document.createElement("div")
+bucket.className="bucket"
+bucket.id="bucket"+k
+
+let water=document.createElement("div")
+water.className="water"
+water.id="water"+k
+
+bucket.appendChild(water)
+
+container.appendChild(label)
+container.appendChild(bucket)
+
+area.appendChild(container)
+
+}
+
+}
+
+
+function createButtons(){
+
+let div=document.getElementById("controls")
+div.innerHTML=""
+
+let row1=document.createElement("div")
+row1.className="row"
+
+for(let k in capacities){
+
+let btn=document.createElement("button")
+btn.innerText="Fill "+k
+btn.onclick=()=>fill(k)
+
+row1.appendChild(btn)
+
+}
+
+div.appendChild(row1)
+
+
+let row2=document.createElement("div")
+row2.className="row"
+
+for(let k in capacities){
+
+let btn=document.createElement("button")
+btn.innerText="Empty "+k
+btn.onclick=()=>empty(k)
+
+row2.appendChild(btn)
+
+}
+
+div.appendChild(row2)
+
+
+let pairs=[]
+
+if(Object.keys(capacities).length==2){
+pairs=[["A","B"],["B","A"]]
+}
+else{
+pairs=[["A","B"],["B","C"],["C","A"],["C","B"],["B","A"],["A","C"]]
+}
+
+let row3=document.createElement("div")
+row3.className="row"
+
+pairs.forEach(p=>{
+let btn=document.createElement("button")
+btn.innerText=p[0]+" → "+p[1]
+btn.onclick=()=>pour(p[0],p[1])
+row3.appendChild(btn)
+})
+
+div.appendChild(row3)
+
+}
+
+
+function fill(j){
+levels[j]=capacities[j]
+moves++
+updateDisplay()
+}
+
+
+function empty(j){
+levels[j]=0
+moves++
+updateDisplay()
+}
+
+
+function pour(a,b){
+
+let space=capacities[b]-levels[b]
+let amount=Math.min(levels[a],space)
+
+levels[a]-=amount
+levels[b]+=amount
+
+moves++
+
+updateDisplay()
+
+}
+
+
+function resetGame(){
+
+for(let k in levels){
+levels[k]=0
+}
+
+moves=0
+
+updateDisplay()
+
+}
+
+
+function updateDisplay(){
+
+document.getElementById("goal").innerText="Goal: "+goal+"L"
+document.getElementById("moves").innerText="Moves: "+moves
+
+for(let k in capacities){
+
+let water=document.getElementById("water"+k)
+
+let percent=(levels[k]/capacities[k])*100
+
+water.style.height=percent+"%"
+
+if(levels[k]==goal){
+win()
+}
+
+}
+
+}
+
+
+function win(){
+
+document.getElementById("popup").style.display="block"
+document.getElementById("winMoves").innerText="Moves: "+moves
+
+}
+
+
+function newRound(){
+
+document.getElementById("popup").style.display="none"
+
+startGame(Object.keys(capacities).length)
+
+}
+
+
+function showMenu(){
+
+document.getElementById("game").style.display="none"
+document.getElementById("menu").style.display="block"
+
+}
+
+</script>
+
+</body>
+</html>
