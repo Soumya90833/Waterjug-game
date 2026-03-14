@@ -1,122 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Pour & Solve</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>Water Jug Puzzle</title>
 
 <style>
+:root{
+  --bg:#0d1433;
+  --panel:#121a3a;
+  --accent:#2f7fff;
+  --green:#2bb673;
+  --red:#d44a3a;
+  --gold:#e6c23a;
+}
 
 body{
-font-family: Arial;
-background:#0f1c3f;
-color:white;
-text-align:center;
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:linear-gradient(#070d22,#0d1433);
+  color:white;
+  text-align:center;
+}
+
+.container{
+  max-width:420px;
+  margin:auto;
+  padding:20px;
 }
 
 h1{
-margin-top:20px;
+  margin-top:30px;
+  color:#7fd3ff;
 }
 
 button{
-padding:10px 15px;
-margin:5px;
-border:none;
-border-radius:6px;
-font-weight:bold;
-cursor:pointer;
+  border:none;
+  border-radius:8px;
+  padding:10px 14px;
+  font-weight:600;
+  cursor:pointer;
+  margin:4px;
 }
 
 .menuBtn{
-background:#3a8cff;
-color:white;
+  width:80%;
+  font-size:16px;
 }
 
-.bucketArea{
-display:flex;
-justify-content:center;
-margin-top:30px;
-gap:40px;
+.blue{background:#1c63ff;color:white;}
+.green{background:#20a866;color:white;}
+.red{background:#c5392b;color:white;}
+.gold{background:#9a7200;color:white;}
+.purple{background:#7a3bb0;color:white;}
+.gray{background:#444;color:white;}
+
+.header{
+  background:#10183a;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
 }
 
-.bucketContainer{
-text-align:center;
+.bucketRow{
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  margin:20px 0;
+}
+
+.bucketWrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
 }
 
 .bucket{
-width:90px;
-height:180px;
-border:3px solid white;
-border-radius:10px;
-position:relative;
-background:#ddd;
-overflow:hidden;
+  width:90px;
+  height:170px;
+  border-radius:16px;
+  background:#e3e5ee;
+  border:2px solid #6ca8ff;
+  position:relative;
+  overflow:hidden;
 }
 
 .water{
-position:absolute;
-bottom:0;
-width:100%;
-background:#2ea3ff;
+  position:absolute;
+  bottom:0;
+  width:100%;
+  background:#2b8cff;
+  transition:height .4s ease;
+}
+
+.level{
+  font-size:13px;
+  opacity:.9;
 }
 
 .controls{
-margin-top:30px;
+  margin-top:10px;
 }
 
 .row{
-margin:10px;
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
 }
 
-.popup{
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:white;
-color:black;
-padding:30px;
-border-radius:10px;
-display:none;
+.dialog{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:white;
+  color:black;
+  padding:25px;
+  border-radius:12px;
+  display:none;
+  width:260px;
 }
 
+.dialog h3{
+  margin-top:0;
+}
 </style>
 </head>
 
 
 <body>
 
-<h1>🪣 Pour & Solve</h1>
+<div class="container">
 
+<!-- MENU -->
 <div id="menu">
+<h1>🪣 WATER JUG</h1>
+<p>Puzzle Game</p>
 
-<button class="menuBtn" onclick="startGame(2)">Play 2 Jugs</button>
+<button class="menuBtn blue" onclick="startGame(2)">
+🎮 2 Jugs (4L + 3L)
+</button>
 
-<button class="menuBtn" onclick="startGame(3)">Play 3 Jugs</button>
+<br>
 
+<button class="menuBtn green" onclick="startGame(3)">
+🎮 3 Jugs (8L + 5L + 3L)
+</button>
+
+<p style="opacity:.6;margin-top:50px">Fill the right jug to win!</p>
 </div>
 
 
+<!-- GAME -->
 <div id="game" style="display:none">
 
-<h2 id="goal"></h2>
+<div class="header">
+<h3 id="goal"></h3>
+<div id="moves"></div>
+</div>
 
-<h3 id="moves">Moves: 0</h3>
-
-<div class="bucketArea" id="bucketArea"></div>
+<div class="bucketRow" id="buckets"></div>
 
 <div class="controls" id="controls"></div>
 
-<button onclick="resetGame()">RESET</button>
+<div class="row">
+<button class="purple" onclick="resetGame()">RESET</button>
+<button class="gray" onclick="showMenu()">MENU</button>
+</div>
 
-<button onclick="showMenu()">MENU</button>
+</div>
 
 </div>
 
 
-<div class="popup" id="popup">
-<h2>You Won!</h2>
-<p id="winMoves"></p>
-<button onclick="newRound()">START</button>
+<!-- WIN DIALOG -->
+<div class="dialog" id="dialog">
+<h3>🎉 YOU WON!</h3>
+<p id="winText"></p>
+<button class="blue" onclick="playAgain()">PLAY AGAIN</button>
+<button class="gray" onclick="showMenu()">MENU</button>
 </div>
 
 
@@ -127,7 +189,6 @@ let levels={}
 let goal=0
 let moves=0
 
-
 function startGame(type){
 
 document.getElementById("menu").style.display="none"
@@ -135,8 +196,7 @@ document.getElementById("game").style.display="block"
 
 if(type==2){
 capacities={A:4,B:3}
-}
-else{
+}else{
 capacities={A:8,B:5,C:3}
 }
 
@@ -146,57 +206,54 @@ levels[k]=0
 }
 
 moves=0
-
-generateGoal()
+goal=randomGoal()
 
 drawBuckets()
 createButtons()
-
 updateDisplay()
 
 }
 
-
-function generateGoal(){
-
+function randomGoal(){
 let max=Math.max(...Object.values(capacities))
-goal=Math.floor(Math.random()*max)+1
-
+return Math.floor(Math.random()*max)+1
 }
-
 
 function drawBuckets(){
 
-let area=document.getElementById("bucketArea")
+let area=document.getElementById("buckets")
 area.innerHTML=""
 
 for(let k in capacities){
 
-let container=document.createElement("div")
-container.className="bucketContainer"
+let wrap=document.createElement("div")
+wrap.className="bucketWrap"
 
-let label=document.createElement("h3")
-label.innerText=k+" - "+capacities[k]+"L"
+let label=document.createElement("div")
+label.innerHTML=`${k} (${capacities[k]}L)`
 
 let bucket=document.createElement("div")
 bucket.className="bucket"
-bucket.id="bucket"+k
 
 let water=document.createElement("div")
 water.className="water"
 water.id="water"+k
 
+let lvl=document.createElement("div")
+lvl.className="level"
+lvl.id="level"+k
+
 bucket.appendChild(water)
 
-container.appendChild(label)
-container.appendChild(bucket)
+wrap.appendChild(label)
+wrap.appendChild(bucket)
+wrap.appendChild(lvl)
 
-area.appendChild(container)
+area.appendChild(wrap)
 
 }
 
 }
-
 
 function createButtons(){
 
@@ -207,13 +264,11 @@ let row1=document.createElement("div")
 row1.className="row"
 
 for(let k in capacities){
-
 let btn=document.createElement("button")
-btn.innerText="Fill "+k
+btn.className="green"
+btn.innerText="FILL "+k
 btn.onclick=()=>fill(k)
-
 row1.appendChild(btn)
-
 }
 
 div.appendChild(row1)
@@ -223,41 +278,42 @@ let row2=document.createElement("div")
 row2.className="row"
 
 for(let k in capacities){
-
 let btn=document.createElement("button")
-btn.innerText="Empty "+k
+btn.className="red"
+btn.innerText="EMPTY "+k
 btn.onclick=()=>empty(k)
-
 row2.appendChild(btn)
-
 }
 
 div.appendChild(row2)
 
 
 let pairs=[]
-
 if(Object.keys(capacities).length==2){
 pairs=[["A","B"],["B","A"]]
-}
-else{
-pairs=[["A","B"],["B","C"],["C","A"],["C","B"],["B","A"],["A","C"]]
+}else{
+pairs=[["A","B"],["B","C"],["C","A"],
+       ["C","B"],["B","A"],["A","C"]]
 }
 
-let row3=document.createElement("div")
-row3.className="row"
+for(let i=0;i<pairs.length;i+=3){
 
-pairs.forEach(p=>{
+let row=document.createElement("div")
+row.className="row"
+
+pairs.slice(i,i+3).forEach(p=>{
 let btn=document.createElement("button")
-btn.innerText=p[0]+" → "+p[1]
+btn.className="gold"
+btn.innerText=p[0]+" ➜ "+p[1]
 btn.onclick=()=>pour(p[0],p[1])
-row3.appendChild(btn)
+row.appendChild(btn)
 })
 
-div.appendChild(row3)
+div.appendChild(row)
 
 }
 
+}
 
 function fill(j){
 levels[j]=capacities[j]
@@ -265,86 +321,73 @@ moves++
 updateDisplay()
 }
 
-
 function empty(j){
 levels[j]=0
 moves++
 updateDisplay()
 }
 
-
 function pour(a,b){
 
 let space=capacities[b]-levels[b]
-let amount=Math.min(levels[a],space)
+let amt=Math.min(levels[a],space)
 
-levels[a]-=amount
-levels[b]+=amount
+levels[a]-=amt
+levels[b]+=amt
 
 moves++
-
 updateDisplay()
 
 }
 
-
 function resetGame(){
-
 for(let k in levels){
 levels[k]=0
 }
-
 moves=0
-
 updateDisplay()
-
 }
-
 
 function updateDisplay(){
 
-document.getElementById("goal").innerText="Goal: "+goal+"L"
-document.getElementById("moves").innerText="Moves: "+moves
+document.getElementById("goal").innerText="🎯 GOAL : "+goal+" L"
+document.getElementById("moves").innerText="Moves : "+moves
 
 for(let k in capacities){
 
 let water=document.getElementById("water"+k)
+let lvl=document.getElementById("level"+k)
 
 let percent=(levels[k]/capacities[k])*100
 
 water.style.height=percent+"%"
+lvl.innerText=levels[k]+" L"
 
 if(levels[k]==goal){
-win()
+showWin()
 }
 
 }
 
 }
 
+function showWin(){
 
-function win(){
-
-document.getElementById("popup").style.display="block"
-document.getElementById("winMoves").innerText="Moves: "+moves
+document.getElementById("dialog").style.display="block"
+document.getElementById("winText").innerText=
+"You reached "+goal+"L in "+moves+" moves!"
 
 }
 
-
-function newRound(){
-
-document.getElementById("popup").style.display="none"
-
+function playAgain(){
+document.getElementById("dialog").style.display="none"
 startGame(Object.keys(capacities).length)
-
 }
-
 
 function showMenu(){
-
+document.getElementById("dialog").style.display="none"
 document.getElementById("game").style.display="none"
 document.getElementById("menu").style.display="block"
-
 }
 
 </script>
